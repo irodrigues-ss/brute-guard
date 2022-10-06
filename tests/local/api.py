@@ -17,7 +17,6 @@ bg = BruteGuard(
     purge_time=timedelta(seconds=10),
     database_url="db.sqlite",
 )
-bg.control.create_tables()
 
 
 class Body(BaseModel):
@@ -35,16 +34,15 @@ def login(body: Body):
         raise HTTPException(status_code=403)
 
     if body.username == "teste" and body.password == "teste":
-        bg.user.access(body.username, success=True)
+        bg.user.access(body.username, "", success=True)
         return {}
 
-    bg.user.access(body.username, success=False)
+    bg.user.access(body.username, "", success=False)
 
     print(datetime.now() - start)
     raise HTTPException(status_code=401)
 
 
 if __name__ == "__main__":
-
-    # uvicorn.run('api:app', workers=1, port=8000)
+    bg.control.create_tables()
     uvicorn.run("api:app", workers=4, port=8001)

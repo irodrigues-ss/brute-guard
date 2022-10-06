@@ -1,7 +1,8 @@
-from concurrent.futures import ThreadPoolExecutor
 import sys
 import requests
 import datetime
+
+from concurrent.futures import ThreadPoolExecutor
 
 
 def req():
@@ -19,7 +20,7 @@ def serial():
         req()
 
 
-def slow_serial():
+def big_serial():
     for i in range(2000000):
         req()
 
