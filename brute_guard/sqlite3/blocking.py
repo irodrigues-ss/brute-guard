@@ -1,31 +1,35 @@
 import threading
 
-from typing import Optional, Any
+from typing import Optional
+from sqlite3 import Connection
 from dataclasses import dataclass
 
-from brute_guard.settings import (
-    AccessResult, TB_BLOCKED_LIST, TB_ACCESS,
-    COLUMN_IP, COLUMN_USERNAME
-)
 from brute_guard.sqlite3.control import Control
+from brute_guard.settings import (
+    AccessResult,
+    Columns,
+    TB_BLOCKED_LIST,
+    TB_ACCESS,
+)
+
 
 lock = threading.Lock()
 
 
 @dataclass
 class Blocking:
-    conn: Any
+    conn: Connection
     control: Control
-    column: str
+    column: Columns
     blocked_expires_at: str
     failure_time: str
-    accepted_consecutive_failures: int
+    failures: int
 
     def __post_init__(self):
-        if self.column == COLUMN_USERNAME:
-            self.secondary_column = COLUMN_IP
+        if self.column == Columns.USERNAME.value:
+            self.secondary_column = Columns.IP.value
         else:
-            self.secondary_column = COLUMN_USERNAME
+            self.secondary_column = Columns.USERNAME.value
 
     def is_blocked(self, target: str) -> bool:
         # target: username or ip
@@ -46,16 +50,19 @@ class Blocking:
             return bool(cur.fetchone())
 
     def access(self, username: Optional[str], ip: Optional[str], success: bool):
-        if self.column == COLUMN_IP and ip is None:
+        if self.column == Columns.IP.value and ip is None:
             raise ValueError("'ip' must be a valid value")
 
-        if self.column == COLUMN_USERNAME and username is None:
+        if self.column == Columns.USERNAME.value and username is None:
             raise ValueError("'username' must be a valid value")
 
         access_result = AccessResult.FAIL.value
 
         if success:
             access_result = AccessResult.SUCCESS.value
+
+        column_val = ip if self.column == Columns.IP.value else username
+        secondary_column_val = ip if self.secondary_column == Columns.IP.value else username
 
         with lock:
             sql = f"""
@@ -80,7 +87,12 @@ class Blocking:
                 {self.column}
             """
             cur = self.conn.execute(
-                sql, (self.accepted_consecutive_failures, self.failure_time, username)
+                sql,
+                (
+                    self.failures,
+                    self.failure_time,
+                    column_val,
+                ),
             )
             row = cur.fetchone()
 
@@ -94,14 +106,13 @@ class Blocking:
                         created_at = current_timestamp,
                         expires_at = datetime(current_timestamp, ?);
                 """
-                set_val = ip if self.secondary_column == COLUMN_IP else username
 
                 self.conn.execute(
                     sql,
                     (
                         username,
                         ip,
-                        set_val,
+                        secondary_column_val,
                         self.blocked_expires_at,
                     ),
                 )

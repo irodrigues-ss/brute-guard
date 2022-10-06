@@ -6,8 +6,6 @@ export PROJECT_NAME := $(shell ls */settings.py | xargs dirname)
 .PHONY: deploy .env .venv
 .DEFAULT_GOAL := help
 
-.env:
-	@echo 'PYTHONPATH="$(PROJECT_NAME)"' > .env
 
 .venv:
 	@python3.8 -m venv $(VIRTUAL_ENV)
@@ -20,7 +18,7 @@ export PROJECT_NAME := $(shell ls */settings.py | xargs dirname)
 	@echo "make lint" > .git/hooks/pre-commit
 	@chmod +x .git/hooks/pre-commit
 
-install: .venv .env .install-hook  ## Create .venv and install dependencies.
+install: .venv .install-hook  ## Create .venv and install dependencies.
 	pip install --upgrade pip
 	@if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
@@ -38,7 +36,7 @@ clean: ## Clean all caches file.
 
 lint: ## Apply lintings to ensure code quality.
 	@black --line-length=100 --target-version=py38 --check .
-	@flake8 --max-line-length=150 --ignore=E402,W503 --exclude .venv,build --max-complexity 5
+	@flake8 --max-line-length=150 --ignore=E402,W503 --exclude .venv,build --max-complexity 7
 
 format: ## Format code based in PEP8.
 	@black --line-length=100 --target-version=py38 .

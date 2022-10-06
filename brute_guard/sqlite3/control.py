@@ -1,8 +1,10 @@
 import threading
 
-from typing import Any, Optional
+from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+
+from sqlite3 import Connection
 
 from brute_guard.settings import TB_ACCESS, TB_BLOCKED_LIST
 
@@ -12,7 +14,7 @@ lock = threading.Lock()
 
 @dataclass
 class Control:
-    conn: Any
+    conn: Connection
     purge_time: Optional[timedelta]
     access_expires_at: str
     blocked_expires_at: str

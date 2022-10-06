@@ -6,8 +6,10 @@ class AccessResult(Enum):
     FAIL = "fail"
 
 
+class Columns(Enum):
+    IP = "ip"
+    USERNAME = "username"
+
+
 TB_ACCESS = "access"
 TB_BLOCKED_LIST = "blocked"
-
-COLUMN_USERNAME = "username"
-COLUMN_IP = "ip"
